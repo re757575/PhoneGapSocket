@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>聊天示范</title>
+<link href="style/chat.css" rel="stylesheet">
+<script src="js/cordova.js"></script>
+ <!--
+ <script src="http://10.0.2.2:3000/socket.io/socket.io.js"></script>
+ -->
+
+<script src="http://phonegapcamera.herokuapp.com/socket.io/socket.io.js"></script> 
+
+
+<script type="text/javascript" charset="utf-8">
+
+/*
+var nodejs_server = "http://10.0.2.2:3000/";
+ */
+
+ var nodejs_server = "http://phonegapcamera.herokuapp.com/";
+
+var socket = io.connect(nodejs_server);
+socket.emit("send","我是手機端");
+socket.on("response", function (data) {
+	//alert("Socket.io 已連線")
+	navigator.notification.beep(1); 
+});
+
+socket.on("mobile_action", function (data) {
+    switch (data) {
+        case "camera":
+        	capturePhoto();
+            break;   
+        case "beep":
+        	beep();
+            break;          
+        case "vibrate":
+        	vibrate();
+            break;  
+        case "recordAudio":
+        	recordAudio();
+            break;
+        case "stopRecord":
+        	stopRecording();
+            break;
+    }
+ 
+});
+
+
+
+	var pictureSource;   // picture source
+	var destinationType; // sets the format of returned value
+        
+       //功用和onload相同
+       document.addEventListener("deviceready", onDeviceReady, false);
+     
+    function onDeviceReady() {
+    	  pictureSource=navigator.camera.PictureSourceType;
+          destinationType=navigator.camera.DestinationType;
+          console.log("pictureSource: "+pictureSource);
+          console.log("destinationType: "+destinationType);
+          
+          var element = document.getElementById('deviceProperties'); 
+          
+          element.innerHTML = 'Device Name: '     + device.name     + '<br  />' + 
+                              'Device PhoneGap: ' + device.phonegap + '<br  />' + 
+                              'Device Platform: ' + device.platform + '<br  />' + 
+                              'Device UUID: '     + device.uuid     + '<br  />' + 
+                              'Device Version: '  + device.version  + '<br  />'; 
+                              
+          socket.emit("device",device);                   
+  
+    }
+    
+    function notification() {
+    	navigator.notification.alert( 
+    		    'You are the winner!',  // 显示信息 
+    		       alertDismissed,         // 警告被忽视的回调函数 
+    		       'Game Over',            // 标题 
+    		       'Done'                  // 按钮名称 
+    		); 
+    		 
+     }
+    function alertDismissed() { 
+    	navigator.notification.beep(3); 
+    } 
+    //提示聲音3次
+    function beep() { 
+    	navigator.notification.beep(3); 
+    }
+    //震動2秒
+    function vibrate() { 
+    	navigator.notification.vibrate(2000); 
+    }
+    //錄音10秒
+    var mediaRec;
+    var recInterval;
+    function recordAudio() { 
+        var src = "myrecording.mp3"; 
+         mediaRec = new Media(src, onSuccess, onError); 
+     
+        // 开始录制音频 
+        mediaRec.startRecord(); 
+        navigator.notification.beep(1); 
+        // 60秒钟后停止录制 
+        var recTime = 0; 
+        	recInterval = setInterval(function() { 
+        	recTime  = recTime + 1; 
+            setAudioPosition(recTime + " sec"); 
+            if (recTime >= 60) { 
+                clearInterval(recInterval); 
+                mediaRec.stopRecord(); 
+                setAudioPosition("Recording Saved As " + src);
+            } 
+        }, 1000); 
+    } 
+    function setAudioPosition(position) { 
+        document.getElementById('audio_position').innerHTML = position; 
+    } 
+    function stopRecording(){
+        //stop record
+        clearInterval(recInterval); 
+        mediaRec.stopRecord(); 
+        navigator.notification.beep(1);
+        //setAudioPosition("Recording Saved As " + src);   
+	} 
+    // 创建Media对象成功后调用的回调函数 
+    function onSuccess() { 
+    	//alert("recordAudio():Audio Success");
+    	navigator.notification.beep(1);
+        console.log("recordAudio():Audio Success"); 
+        socket.emit("Record","success"); 
+    } 
+    
+    
+    // 创建Media对象出错后调用的回调函数 
+    function onError(error) { 
+        alert('code: '    + error.code    + '\n' + 
+              'message: ' + error.message + '\n'); 
+        socket.emit("Record","error");
+    } 
+        
+ //一個按鈕將調用這個函數
+    function capturePhoto() {
+       // 取得圖像(成功事件 ,失敗事件,{圖片設定});
+      // getpicture(cameraSuccess,cameraError,{cameraOptions});
+    	navigator.camera.getPicture(onPhotoDataSuccess, onFail, { quality: 75,
+            destinationType: destinationType.DATA_URL });
+    }
+    //照片是成功檢索時調用
+    function onPhotoDataSuccess(imageData) {
+      //取消註釋，以查看base64編碼的圖像數據
+      console.log("base64: "+imageData);
+ 
+      //獲取的圖像處理
+      var smallImage = document.getElementById('smallImage');
+ 
+      //取消隱藏的圖像元素
+      smallImage.style.display = 'block';
+ 
+      //顯示拍攝的照片
+      //內聯 CSS規則是用來調整圖像的大小
+      smallImage.src = "data:image/jpeg;base64," + imageData;
+      
+      //上傳
+      upLoad(smallImage.src);
+    }
+ 
+    //錯誤發生時 
+    function onFail(message) {
+      alert('Failed because: ' + message);
+    }
+    function upLoad(img){
+    	socket.emit("upload",{img:img});
+    }
+      </script>
+</head>
+<body>
+<button onclick="capturePhoto();">Capture Photo</button>
+<button onclick="notification();">notification</button>
+<button onclick="recordAudio();">recordAudio</button>
+<button onclick="stopRecording();">stopRecording</button>
+ <p id="audio_position"></p> 
+<img style="display:none;width:400px;height:600px;" id="smallImage" src="" />
+ <p id="deviceProperties">Loading device properties...</p> 
+</body>
+</html>
