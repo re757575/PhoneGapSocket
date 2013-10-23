@@ -1,104 +1,271 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Capture Photo</title>
+<head>
+<meta charset=utf-8 />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">  
+<meta name="description" content="Jquery Mo" />
 
-    <script type="text/javascript" charset="utf-8" src="js/cordova.js"></script>
-    <script type="text/javascript" charset="utf-8">
+<link href="style/jquery-ui.css" rel="stylesheet" type="text/css" />    
+  
+<link href="style/jquery.mobile-1.3.2.min.css" rel="stylesheet" type="text/css" />
 
-    var pictureSource;   // picture source
-    var destinationType; // sets the format of returned value
+<script src="js/cordova.js"></script>
+  
+<script src="js/jquery-1.9.1.js"></script>
+  
+<script src="js/jquery-ui.js"></script> 
 
-    // Wait for device API libraries to load
-    //
-    document.addEventListener("deviceready",onDeviceReady,false);
+<script>
+$(document).bind("mobileinit",function(){
+	$.mobile.defaultPageTransition = "slide";
+});
+</script>  
+<script src="js/jquery.mobile-1.3.2.min.js"></script>
+ <script src="http://phonegapcamera.herokuapp.com/socket.io/socket.io.js"></script>
 
-    // device APIs are available
-    //
-    function onDeviceReady() {
-        pictureSource=navigator.camera.PictureSourceType;
-        destinationType=navigator.camera.DestinationType;
-    }
+ <!--
 
-    // Called when a photo is successfully retrieved
-    //
-    function onPhotoDataSuccess(imageData) {
-      // Uncomment to view the base64-encoded image data
-      // console.log(imageData);
+  <script src="http://127.0.0.1:3000/socket.io/socket.io.js"></script>
+  -->
 
-      // Get image handle
-      //
-      var smallImage = document.getElementById('smallImage');
 
-      // Unhide image elements
-      //
-      smallImage.style.display = 'block';
 
-      // Show the captured photo
-      // The inline CSS rules are used to resize the image
-      //
-      smallImage.src = "data:image/jpeg;base64," + imageData;
-    }
 
-    // Called when a photo is successfully retrieved
-    //
-    function onPhotoURISuccess(imageURI) {
-      // Uncomment to view the image file URI
-      // console.log(imageURI);
 
-      // Get image handle
-      //
-      var largeImage = document.getElementById('largeImage');
+<style>
 
-      // Unhide image elements
-      //
-      largeImage.style.display = 'block';
+#progressbar {
+    height: 2em;
+    text-align: left;
+    overflow: hidden;
+    width: 80%;
+    margin: 50% auto;
+}
 
-      // Show the captured photo
-      // The inline CSS rules are used to resize the image
-      //
-      largeImage.src = imageURI;
-    }
+._panel {
+	display: none;
+	text-align: center;
+	margin-top: 5%;
+}
+._panel > .ui-slider  {
+margin-bottom: 10%;
+}
+.shadow {
+	-webkit-box-shadow: 0 1px 5px rgba(34,25,25,0.4);
+	-moz-box-shadow: 0 10px 50px rgba(34,25,25,0.4);
+	-ms-box-shadow: 0 1px 5px rgba(34,25,25,0.4);
+	-o-box-shadow: 0 1px 5px rgba(34,25,25,0.4);
+	box-shadow: 0 1px 5px rgba(34,25,25,0.4);
+	background: #F8F2F2;
+}
 
-    // A button will call this function
-    //
-    function capturePhoto() {
-      // Take picture using device camera and retrieve image as base64-encoded string
-      navigator.camera.getPicture(onPhotoDataSuccess, onFail, { quality: 50,
-        destinationType: destinationType.DATA_URL });
-    }
+.item {
+	margin: 5px;
+	padding: 10px;
+	color: #555;
+}
+</style>
+<title>JS Bin</title>
+</head>
+<body>
+<!-- Home -->
+<div data-role="page" id="offline_page" style="background-image: url('style/images/subtle_stripes.png');">
+  
+    <div data-theme="a" data-role="header">
+        <a id="open" data-role="button" data-transition="none" data-theme="a" data-icon="check" data-iconpos="left" class="ui-btn-left">
+            開啟
+        </a>
+        <a id="onlinebtn" data-role="button" data-icon="arrow-u" data-iconpos="left"class="ui-btn-right"  href="#online_page">
+            上線
+        </a>
+        <h3 id="title">離線中</h3>
+    </div>
+  
+    <div data-role="content" id="content">
+        <ul id="listview" data-role="listview" data-divider-theme="a" data-inset="true" style="display: none;">
+            <li data-role="list-divider" role="heading">
+                功能
+            </li>
+            <li data-theme="c">
+                <a id="camera" href="#page1" data-transition="none">
+                    拍照
+                </a>
+            </li>
+            <li data-theme="c">
+                <a id="beep" href="#page1" data-transition="none">
+                    提示鈴
+                </a>
+            </li>
+            <li data-theme="c">
+                <a id="vibrate" href="#page1" data-transition="none">
+                    震動
+                </a>
+            </li>
+            <li data-theme="c">
+                <a id="recordAudio" href="#page1" data-transition="slidedown">
+                    錄音
+                </a>
+            </li>
+            <li data-theme="c">
+                <a id="Acceler" href="#page1" data-transition="slidedown">
+                    加速度感測器
+                </a>
+            </li>                       
+        </ul>      
+      
+        
+         
+        <div data-role="fieldcontain" class="_panel"  >
+          <input id="slider_sec" type="range" name="slider_sec" data-highlight="true" min="0" max="60" value="0" >
+          <select name="recordAudio_toggle" id="recordAudio_toggle" data-theme="c" data-role="slider">
+                <option value="off">
+                    停止
+                </option>
+                <option value="on">
+                    開始
+                </option>
+            </select> 
+        </div> 
+      
+         <div id="show" class="shadow item" style="display: none;">
+            <img id="img" style="width: 100%;" src="">
+        </div>
+         <div id="showAcceler" ></div>                   
+    </div>
+       
+</div>
+  
+<!--上線-->
+<div data-role="page" id="online_page" style="background-image: url('style/images/subtle_stripes.png');">
+  
+    <div data-theme="a" data-role="header">
 
-    // A button will call this function
-    //
-    function capturePhotoEdit() {
-      // Take picture using device camera, allow edit, and retrieve image as base64-encoded string
-      navigator.camera.getPicture(onPhotoDataSuccess, onFail, { quality: 20, allowEdit: true,
-        destinationType: destinationType.DATA_URL });
-    }
+        <a id="offinebtn" data-role="button" data-icon="arrow-d" data-iconpos="left" class="ui-btn-right"  href="#offline_page">
+            離線
+        </a>
+        <h3 class="title">連線中</h3>
+    </div>
+  
+     <div data-role="content">
+         <div id="progressbar"></div>  
+     </div>
+     <div id="show2" class="shadow item" style="display: none;">
+            <img id="img2" style="width: 100%;" src="">
+     </div>     
+     <div id="showAcceler2" ></div>   
+</div>  
+<script>
 
-    // A button will call this function
-    //
-    function getPhoto(source) {
-      // Retrieve image file location from specified source
-      navigator.camera.getPicture(onPhotoURISuccess, onFail, { quality: 50,
-        destinationType: destinationType.FILE_URI,
-        sourceType: source });
-    }
 
-    // Called if something bad happens.
-    //
-    function onFail(message) {
-      alert('Failed because: ' + message);
-    }
+$(function(){
 
-    </script>
-  </head>
-  <body>
-    <button onclick="capturePhoto();">Capture Photo</button> <br>
-    <button onclick="capturePhotoEdit();">Capture Editable Photo</button> <br>
-    <button onclick="getPhoto(pictureSource.PHOTOLIBRARY);">From Photo Library</button><br>
-    <button onclick="getPhoto(pictureSource.SAVEDPHOTOALBUM);">From Photo Album</button><br>
-    <img style="display:none;width:60px;height:60px;" id="smallImage" src="" />
-    <img style="display:none;" id="largeImage" src="" />
-  </body>
+	  
+	
+ /* var content_width = $("#content").width();
+  var file_width = $("#fieldcontain").width();
+  
+  $("#fieldcontain").css({
+    left : function(){
+      return ((content_width-file_width)/2);
+    },
+    marginTop : "5%"
+  });
+*/
+
+  $("div[class=ui-slider]").css({	  
+	  width: "100%",
+	  marginBottom: "5%"
+  });
+
+  $("#open").click(function(){
+    $("#listview").toggle(300,"easeOutBack");
+  });
+    
+  $("#onlinebtn").click(function(){
+      $("#listview").hide("blind",600);
+  });
+
+  $("#progressbar").progressbar({
+      value: false //Math.floor( Math.random() * 100 )
+  });
+  
+  $("#progressbar").find( ".ui-widget-header" ).css({
+      "background": '#' + Math.floor( Math.random() * 16777215 ).toString( 16 )
+   });
+  
+  $("#camera").click(function(){
+	  $("#listview").hide();
+	  capturePhoto();
+	 
+	  $("#show").show(1500);
+  }); 
+
+  $("#beep").click(function(){
+       beep(); 
+  });  
+  
+  $("#vibrate").click(function(){
+       vibrate();
+  });  
+  
+  $("#recordAudio").click(function(){
+    $("._panel").toggle(300,"easeOutBack");
+  });  
+  
+  var count = 1;
+  $("#Acceler").click(function(){
+	 (count % 2) == 1 ? acceler() : stopAcceler() ;
+	  count ++ ;
+  });     
+  
+  $("#recordAudio_toggle").change(function(){
+    
+   var toggle = $("#recordAudio_toggle option:selected").val();
+   console.log(toggle);
+   
+   if(toggle == "on"){
+       recordAudio(); 
+   }else{
+      stopRecording();
+   }
+  });  
+  
+  
+  $(document).on('pagechange', function(e, data){    
+	  if(window.location.hash == "#online_page"){
+		  mySocket();
+		 
+		  //socket.socket.connect();
+		  if(socket.socket.connect()){
+			
+			  socket.emit("send","我是手機端");
+			  socket.on("response", function (data) {
+				$("#progressbar").fadeOut(1000);
+			  	//alert("Socket.io 已連線")
+			  	socket.emit("device",_device);
+			  	$("#online_page").find("h3").html("已連線");
+			    _switchSocket = true ;
+			  });	
+		  }
+  
+	  }else{
+		  //socket.disconnect();
+		  $("#online_page").find("h3").html("連線中");
+		  $("#progressbar").show();
+		  socket.disconnect();
+		  _switchSocket = false ;
+		  stopAcceler();
+		  $("#showAcceler").html("");
+		  $("#show2").hide();
+	  }
+	})
+  
+
+
+
+
+});
+</script>  
+<script src="js/main.js"></script>
+</body>
 </html>
