@@ -97,17 +97,49 @@ function onAccelerSucess(acceleration){
 	var formattedTime = hours + ':' + minutes + ':' + seconds;
 	
 	//Math.floor 無條件捨去, 取小數後1位
-	var xyz = '<p>x: ' + Math.floor(acceleration.x * 10)/10 + '</p>' +
-			  '<p>y: ' + Math.floor(acceleration.y * 10)/10+ '</p>' +
-			  '<p>z: ' + Math.floor(acceleration.z * 10)/10 + '</p>' +
+	var x = Math.floor(acceleration.x * 10)/10;
+	var y = Math.floor(acceleration.y * 10)/10;
+	var z = Math.floor(acceleration.z * 10)/10;
+	var xyz = '<p>x: ' + x + '</p>' +
+			  '<p>y: ' + y + '</p>' +
+			  '<p>z: ' + z + '</p>' +
 			  '<p>timestamp: ' + formattedTime + '</p>' ;
 	//alert(xyz);
 	
 	if(_switchSocket  && (window.location.hash == "#online_page")){
-		socket.emit("acceler",xyz);
+		var gameReady = false;
+		
+	   /* socket.on('resp_gameReady', function(data) {
+	    	
+	    	
+	    	if(data == "true"){
+	    		gameReady = true ;	
+	    	}
+	  * 	
+		    if(gameReady){	
+		    	socket.emit("playerConnet","true");
+		    	socket.emit("playerDirection",x+','+y+','+z);
+		    }else{
+				socket.emit("acceler",xyz);
+				$("#showAcceler2").html(xyz);
+		    }
+	    });
+	  */
+	   // socket.emit("acceler",xyz);
+		socket.emit("playerDirection",x +','+ y +','+ z);
 		$("#showAcceler2").html(xyz);
+	   
 	}else if(!_switchSocket  && (window.location.hash != "#online_page")) {
 		$("#showAcceler").html(xyz);
+		if(x > 4){
+			alert("left");
+		}else if (x < -4){
+			alert("right");
+		}else if(y > 4){
+			alert("down")
+		}else if(y <-4){
+			alert("up");
+		}
 	}
 }
 

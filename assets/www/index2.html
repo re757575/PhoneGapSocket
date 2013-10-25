@@ -152,7 +152,8 @@ margin-bottom: 10%;
      <div id="show2" class="shadow item" style="display: none;">
             <img id="img2" style="width: 100%;" src="">
      </div>     
-     <div id="showAcceler2" ></div>   
+     <div id="showAcceler2" ></div>
+     <button id="goGame">Game</button>   
 </div>  
 <script>
 
@@ -212,6 +213,10 @@ $(function(){
     $("._panel").toggle(300,"easeOutBack");
   });  
   
+  $("#goGame").click(function(){
+	  acceler();
+  });
+  
   var count = 1;
   $("#Acceler").click(function(){
 	 (count % 2) == 1 ? acceler() : stopAcceler() ;
@@ -249,6 +254,7 @@ $(function(){
 		  }
   
 	  }else{
+		 // socket.emit("playerConnet",false);
 		  //socket.disconnect();
 		  $("#online_page").find("h3").html("連線中");
 		  $("#progressbar").show();
